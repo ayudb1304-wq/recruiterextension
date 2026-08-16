@@ -106,3 +106,37 @@ The extension is **read-only on LinkedIn**, paginates at **human speed** through
 permissions and one host**, and **never persists candidate data** anywhere.
 These are enforced by tests (`permissions.test.ts`, `throttle.test.ts`,
 `job.test.ts`) as well as by CLAUDE.md. See docs/08 for the reasoning.
+
+## Database setup
+
+```bash
+# 1. put ONE of these in the gitignored .env at the repo root
+#    DATABASE_URL=postgresql://postgres.<ref>:<pw>@<host>:5432/postgres
+#    ...or SUPABASE_ACCESS_TOKEN=sbp_... plus SUPABASE_PROJECT_REF=<ref>
+#    (SUPABASE_SERVICE_KEY alone cannot run DDL — it goes through PostgREST)
+
+node scripts/db-migrate.mjs            # show what would run
+node scripts/db-migrate.mjs --apply    # run it
+node scripts/db-migrate.mjs --status   # what is applied
+```
+
+The quota functions have an integration suite that runs against a real Postgres.
+It is skipped by default; to run it:
+
+```bash
+docker run -d --name re-pgtest -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:17-alpine
+TEST_DATABASE_URL=postgresql://postgres:test@localhost:55432/postgres pnpm test
+```
+
+## Payments setup
+
+```bash
+DODO_API_KEY=... node scripts/dodo-setup.mjs           # dry run, creates nothing
+DODO_API_KEY=... node scripts/dodo-setup.mjs --apply   # test mode
+DODO_API_KEY=... node scripts/dodo-setup.mjs --apply --live \
+  --webhook-url https://api.yourdomain.com/webhooks/dodo
+```
+
+Creates both Pro products and the webhook endpoint, then prints the signing key
+(which Dodo does not return on creation). Idempotent — safe to re-run. Checkout
+links and the customer-portal link are still created by hand in the dashboard.

@@ -149,11 +149,17 @@ begin
 
   -- Live reservations count against the caps until they expire or commit, so a
   -- user cannot open ten panels and reserve the full quota ten times over.
-  select coalesce(sum(allowed_rows), 0) into v_reserved
-    from quota_reservations
-   where user_id = p_user_id
-     and committed_at is null
-     and expires_at > now();
+  --
+  -- NOTE the `qr.` qualification: this function's RETURNS TABLE declares columns
+  -- named `allowed_rows` and `expires_at`, which shadow the table's own columns
+  -- of the same name. Unqualified, Postgres raises "column reference is
+  -- ambiguous" at RUNTIME — the function creates fine and then fails on every
+  -- call. Do not remove the alias.
+  select coalesce(sum(qr.allowed_rows), 0) into v_reserved
+    from quota_reservations qr
+   where qr.user_id = p_user_id
+     and qr.committed_at is null
+     and qr.expires_at > now();
 
   v_allowed := least(
     p_estimated_rows,

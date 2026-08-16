@@ -1,0 +1,10 @@
+{
+  // Tests run in vitest under Node, so they get Node's types as well as the
+  // Worker ones. Kept separate from tsconfig.json so that src/ cannot reach for
+  // a Node API that does not exist on Cloudflare.
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "@cloudflare/workers-types"]
+  },
+  "include": ["tests/**/*.ts", "src/**/*.ts", "../shared/src/**/*.ts"]
+}

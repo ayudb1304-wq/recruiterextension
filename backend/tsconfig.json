@@ -6,5 +6,8 @@
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "../shared/src/**/*.ts"]
+  // src only. Worker code must NOT see Node's globals — if `node:fs` typechecks
+  // here, someone will eventually import it and the deploy will fail at runtime.
+  // Tests get their own config (tsconfig.tests.json).
+  "include": ["src/**/*.ts", "../shared/src/**/*.ts"]
 }
