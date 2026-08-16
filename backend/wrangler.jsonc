@@ -15,6 +15,10 @@
     "SITE_BASE": "http://localhost:4173",
     "EMAIL_FROM": "login@example.com",
 
+    // Not a secret — the project ref is public in every Supabase URL. The
+    // SERVICE KEY that goes with it is a wrangler secret, never a var.
+    "SUPABASE_URL": "https://ydofetvwqkbsdbkbqkmn.supabase.co",
+
     // Dodo TEST-mode product ids, created 2026-08-16 by scripts/dodo-setup.mjs.
     // Not secrets — they appear in checkout URLs. Live-mode ids will differ, so
     // set those per-environment when you go live.
