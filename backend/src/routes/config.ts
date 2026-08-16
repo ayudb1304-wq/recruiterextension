@@ -27,7 +27,22 @@ configRoutes.get('/selectors', async (c) => {
     return c.json({ error: 'unknown_profile', message: 'No such page profile.' }, 404);
   }
 
-  const row = await getActiveSelectorConfig(c.get('db'), profile);
+  let row;
+  try {
+    row = await getActiveSelectorConfig(c.get('db'), profile);
+  } catch (err) {
+    // Fail SOFT, deliberately. This is the endpoint every install polls, and a
+    // 204 makes the extension use its bundled snapshot — which is the designed
+    // fallback (docs/03 §5). Answering 500 would turn "our database blinked"
+    // into an error surfaced across every user for no benefit, since the
+    // extension's behaviour is identical either way.
+    console.error(
+      `selector config lookup failed for ${profile}: ${
+        err instanceof Error ? err.message : 'unknown'
+      }`,
+    );
+    return c.body(null, 204);
+  }
 
   if (!row) {
     // No active config: the extension falls back to its bundled snapshot, which

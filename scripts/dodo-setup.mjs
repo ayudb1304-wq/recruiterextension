@@ -17,7 +17,8 @@
  *   DODO_API_KEY=... node scripts/dodo-setup.mjs --apply --live  # live mode
  *
  * Options:
- *   --webhook-url <url>   endpoint to register (default http://localhost:8787/webhooks/dodo)
+ *   --webhook-url <url>   HTTPS endpoint to register. Omit to do products only —
+ *                         Dodo rejects http, so this needs a deployed Worker.
  *   --live                use https://live.dodopayments.com (default: test)
  *   --apply               actually create things (default: print the plan only)
  *
@@ -28,8 +29,8 @@
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
 const LIVE = args.includes('--live');
-const WEBHOOK_URL =
-  valueOf('--webhook-url') ?? 'http://localhost:8787/webhooks/dodo';
+/** Omit to set up products only — the webhook needs a public HTTPS endpoint. */
+const WEBHOOK_URL = valueOf('--webhook-url') ?? null;
 
 const BASE = LIVE ? 'https://live.dodopayments.com' : 'https://test.dodopayments.com';
 const API_KEY = process.env.DODO_API_KEY;
@@ -37,6 +38,21 @@ const API_KEY = process.env.DODO_API_KEY;
 function valueOf(flag) {
   const i = args.indexOf(flag);
   return i >= 0 ? args[i + 1] : undefined;
+}
+
+/**
+ * Dodo rejects non-HTTPS endpoints with a 422. Checked up front so the run
+ * fails before creating products rather than halfway through.
+ */
+if (WEBHOOK_URL !== null && !/^https:\/\//.test(WEBHOOK_URL)) {
+  console.error(`Webhook URL must be https — got: ${WEBHOOK_URL}\n`);
+  console.error('Dodo refuses plain http (including http://localhost).');
+  console.error('Deploy the Worker first, then pass its URL:\n');
+  console.error('  node scripts/dodo-setup.mjs --apply \\');
+  console.error('    --webhook-url https://<worker>.workers.dev/webhooks/dodo\n');
+  console.error('For local testing, put an HTTPS tunnel in front of wrangler dev');
+  console.error('(cloudflared tunnel, ngrok, etc.) and use that URL.');
+  process.exit(1);
 }
 
 if (!API_KEY) {
@@ -168,7 +184,9 @@ async function findWebhookByUrl(url) {
 
 async function main() {
   console.log(`Dodo setup — ${LIVE ? 'LIVE' : 'TEST'} mode (${BASE})`);
-  console.log(`Webhook endpoint: ${WEBHOOK_URL}`);
+  console.log(
+    `Webhook endpoint: ${WEBHOOK_URL ?? '(none — pass --webhook-url once the Worker is deployed)'}`,
+  );
   if (!APPLY) console.log('\nDRY RUN. Re-run with --apply to create anything.\n');
 
   const env = {};
@@ -192,31 +210,40 @@ async function main() {
     }
 
     const { key, ...payload } = product;
-    const created = await api('/products', { method: 'POST', body: JSON.stringify(payload) });
+    const created = await api('/products', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
     const id = created.product_id ?? created.id;
     console.log(`  created: ${id}`);
     env[key] = id;
   }
 
   // ── webhook ──────────────────────────────────────────────────────────────
-  console.log(`\n▸ Webhook → ${WEBHOOK_URL}`);
-  console.log(`  subscribing to ${WEBHOOK_EVENTS.length} event types`);
-
-  let webhook = await findWebhookByUrl(WEBHOOK_URL);
-  if (webhook) {
-    console.log(`  already exists: ${webhook.id}`);
-  } else if (APPLY) {
-    webhook = await api('/webhooks', {
-      method: 'POST',
-      body: JSON.stringify({
-        url: WEBHOOK_URL,
-        description: 'Recruiter Export — subscription lifecycle',
-        filter_types: WEBHOOK_EVENTS,
-      }),
-    });
-    console.log(`  created: ${webhook.id}`);
+  let webhook = null;
+  if (!WEBHOOK_URL) {
+    console.log('\n▸ Webhook — skipped (no --webhook-url given)');
+    console.log('  Re-run with the deployed Worker URL to register it and get the signing key.');
   } else {
-    console.log('  would create');
+    console.log(`\n▸ Webhook → ${WEBHOOK_URL}`);
+    console.log(`  subscribing to ${WEBHOOK_EVENTS.length} event types`);
+
+    webhook = await findWebhookByUrl(WEBHOOK_URL);
+    if (webhook) {
+      console.log(`  already exists: ${webhook.id}`);
+    } else if (APPLY) {
+      webhook = await api('/webhooks', {
+        method: 'POST',
+        body: JSON.stringify({
+          url: WEBHOOK_URL,
+          description: 'Recruiter Export — subscription lifecycle',
+          filter_types: WEBHOOK_EVENTS,
+        }),
+      });
+      console.log(`  created: ${webhook.id}`);
+    } else {
+      console.log('  would create');
+    }
   }
 
   if (webhook?.id && APPLY) {

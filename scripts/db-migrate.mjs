@@ -150,6 +150,10 @@ await withDb(async (run) => {
       checksum text not null,
       applied_at timestamptz not null default now()
     );
+    -- Supabase exposes the whole public schema through PostgREST, so even a
+    -- bookkeeping table needs RLS on with no policies — otherwise the anon key
+    -- can enumerate it. Matches every other table in 0001_init.sql.
+    alter table schema_migrations enable row level security;
   `);
 
   const appliedRows = await run('select filename, checksum from schema_migrations');

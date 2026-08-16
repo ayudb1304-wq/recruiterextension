@@ -13,7 +13,13 @@
     "ENVIRONMENT": "development",
     "ENRICH_PROVIDER": "mock",
     "SITE_BASE": "http://localhost:4173",
-    "EMAIL_FROM": "login@example.com"
+    "EMAIL_FROM": "login@example.com",
+
+    // Dodo TEST-mode product ids, created 2026-08-16 by scripts/dodo-setup.mjs.
+    // Not secrets — they appear in checkout URLs. Live-mode ids will differ, so
+    // set those per-environment when you go live.
+    "DODO_PRODUCT_ID_PRO_MONTHLY": "pdt_0NlVzqS2nyO0HQfk57yom",
+    "DODO_PRODUCT_ID_PRO_ANNUAL": "pdt_0NlVzqTrOt7JE3kgUJNvD"
   },
 
   // KV for rate-limit counters, magic-link tokens, job reservations and
