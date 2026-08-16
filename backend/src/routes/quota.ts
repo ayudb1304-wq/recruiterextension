@@ -14,6 +14,7 @@ import { RESERVATION_TTL_MS, type QuotaCommitResponse, type QuotaReserveResponse
 import { z } from 'zod';
 import type { App } from '../lib/middleware';
 import { perUserRateLimit, requireAuth } from '../lib/middleware';
+import { checkoutUrl } from '../lib/checkout';
 import { fail } from '../lib/errors';
 import {
   commitQuota,
@@ -46,7 +47,7 @@ quotaRoutes.post('/reserve', async (c) => {
   // Enrichment is a paid feature. Fail with the upgrade path, not a bare 402.
   if (parsed.data.enrich && plan === 'free') {
     fail(402, 'plan_required', 'Verified emails are on Pro.', {
-      checkoutUrl: c.env.DODO_CHECKOUT_URL_PRO_MONTHLY,
+      checkoutUrl: checkoutUrl(c.env, 'pro_monthly', c.get('email')),
     });
   }
 
@@ -69,7 +70,7 @@ quotaRoutes.post('/reserve', async (c) => {
       });
     }
     fail(402, 'quota_exhausted', 'You have used your rows for this month.', {
-      checkoutUrl: plan === 'free' ? c.env.DODO_CHECKOUT_URL_PRO_MONTHLY : undefined,
+      checkoutUrl: plan === 'free' ? checkoutUrl(c.env, 'pro_monthly', c.get('email')) : undefined,
       monthCap: usage.monthCap,
     });
   }

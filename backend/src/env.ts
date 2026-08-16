@@ -17,8 +17,12 @@ export interface Env {
   ENRICH_PROVIDER: string;
   EMAIL_FROM: string;
   SITE_BASE: string;
-  DODO_CHECKOUT_URL_PRO_MONTHLY: string;
-  DODO_CHECKOUT_URL_PRO_ANNUAL: string;
+  /**
+   * Base for static checkout links, without a trailing slash, e.g.
+   * https://test.checkout.dodopayments.com/buy — the product id is appended.
+   * Optional: lib/checkout.ts picks test/live from ENVIRONMENT when unset.
+   */
+  DODO_CHECKOUT_BASE: string;
   DODO_PORTAL_URL: string;
   DODO_PRODUCT_ID_PRO_MONTHLY: string;
   DODO_PRODUCT_ID_PRO_ANNUAL: string;

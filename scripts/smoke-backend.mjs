@@ -153,16 +153,17 @@ try {
 
   // Deliberately strict: an empty string is NOT a usable upgrade link, and an
   // earlier version of this assertion passed locally purely because an unset
-  // `DODO_CHECKOUT_URL_PRO_MONTHLY=` in .dev.vars reads back as "".
-  const checkoutUrl = enrichAsFree.body?.checkoutUrl;
-  if (!checkoutUrl) {
-    skip(
-      'plan_required carries no checkout URL',
-      'set DODO_CHECKOUT_URL_PRO_MONTHLY — until then the upgrade prompt links nowhere',
-    );
-  } else {
-    check('...with a usable https checkout URL', /^https:\/\/.+/.test(checkoutUrl), checkoutUrl);
-  }
+  // env var reads back as "".
+  const checkoutUrl = enrichAsFree.body?.checkoutUrl ?? '';
+  check('...with a usable https checkout URL', /^https:\/\/.+\/buy\/pdt_/.test(checkoutUrl), checkoutUrl || '(empty)');
+  check(
+    '...prefilled with the account email',
+    checkoutUrl.includes(encodeURIComponent(EMAIL)),
+  );
+  check(
+    '...and the email field locked, so payment cannot land on another account',
+    checkoutUrl.includes('disableEmail=true'),
+  );
 
   const freeReserve = await call('/quota/reserve', {
     method: 'POST',

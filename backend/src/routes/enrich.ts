@@ -15,6 +15,7 @@ import { ENRICH_BATCH_MAX, type EnrichResponse, type EnrichResult } from '@recru
 import { z } from 'zod';
 import type { App } from '../lib/middleware';
 import { perUserRateLimit, requireAuth } from '../lib/middleware';
+import { checkoutUrl } from '../lib/checkout';
 import { fail } from '../lib/errors';
 import { consumeEnrichment, effectivePlan, getReservation, getSubscription } from '../db/queries';
 import { NOT_FOUND, resolveProvider } from '../enrich/provider';
@@ -57,7 +58,7 @@ enrichRoutes.post('/', async (c) => {
   }
   if (!reservation.enrich_allowed) {
     fail(402, 'plan_required', 'Verified emails are on Pro.', {
-      checkoutUrl: c.env.DODO_CHECKOUT_URL_PRO_MONTHLY,
+      checkoutUrl: checkoutUrl(c.env, 'pro_monthly', c.get('email')),
     });
   }
 

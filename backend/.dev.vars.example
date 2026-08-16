@@ -6,8 +6,9 @@ JWT_SECRET=dev-only-change-me-at-least-32-chars-long
 ENRICH_PROVIDER=mock
 ENRICH_API_KEY=
 DODO_WEBHOOK_SECRET=
-DODO_CHECKOUT_URL_PRO_MONTHLY=https://checkout.dodopayments.com/replace-me-monthly
-DODO_CHECKOUT_URL_PRO_ANNUAL=https://checkout.dodopayments.com/replace-me-annual
+# Base for static checkout links; product id is appended by lib/checkout.ts.
+# Leave blank to pick test/live automatically from ENVIRONMENT.
+DODO_CHECKOUT_BASE=
 DODO_PORTAL_URL=https://portal.dodopayments.com/replace-me
 DODO_PRODUCT_ID_PRO_MONTHLY=
 DODO_PRODUCT_ID_PRO_ANNUAL=
