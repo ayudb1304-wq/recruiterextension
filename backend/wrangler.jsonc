@@ -12,7 +12,9 @@
   "vars": {
     "ENVIRONMENT": "development",
     "ENRICH_PROVIDER": "mock",
-    "SITE_BASE": "http://localhost:4173",
+    // Live site (GitHub Pages). Carries a path because project sites are served
+    // under /<repo>/ — CORS compares only its ORIGIN, see lib/middleware.ts.
+    "SITE_BASE": "https://ayudb1304-wq.github.io/recruiterextension",
     "EMAIL_FROM": "login@example.com",
 
     // Not a secret — the project ref is public in every Supabase URL. The

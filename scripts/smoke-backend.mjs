@@ -82,6 +82,10 @@ async function call(path, { method = 'GET', body, token, headers = {} } = {}) {
 const { default: postgres } = await import('postgres');
 const sql = postgres(DB_URL, { ssl: 'require', max: 1, onnotice: () => {} });
 
+/** Sentinel for "stop the suite, but still clean up". */
+const STOP = Symbol('stop');
+let stoppedEarly = false;
+
 console.log(`Backend smoke test → ${BASE}`);
 console.log(`Throwaway user: ${EMAIL}\n`);
 
@@ -98,21 +102,37 @@ try {
   // ── auth ─────────────────────────────────────────────────────────────────
   console.log('\nauth (docs/05 §1)');
   const link = await call('/auth/request-link', { method: 'POST', body: { email: EMAIL } });
-  check('POST /auth/request-link returns ok:true', link.body?.ok === true);
 
-  const bad = await call('/auth/request-link', { method: 'POST', body: { email: 'not-an-email' } });
-  check('invalid email still returns ok (no account enumeration)', bad.body?.ok === true);
+  // 10 magic links per IP per hour (docs/05 §1). Running this suite repeatedly
+  // from one address legitimately trips it, so a 429 here is the rate limiter
+  // doing its job — not a broken endpoint. Report it as such and skip the
+  // checks that depend on a token having been issued.
+  const rateLimited = link.status === 429;
 
-  // The token is hashed in the database, so read the row and re-derive nothing:
-  // instead mint our own token the same way the endpoint does, to test /verify.
-  const [tokenRow] = await sql`
-    select token_hash, expires_at, used_at from auth_tokens
-     where email = ${EMAIL} order by created_at desc limit 1`;
-  check('magic-link token stored, hashed, unused', !!tokenRow && tokenRow.used_at === null);
-  check(
-    'token is a hash, not the raw value',
-    !!tokenRow && /^[0-9a-f]{64}$/.test(tokenRow.token_hash),
-  );
+  if (rateLimited) {
+    check('rate limiter is enforcing the per-IP magic-link cap', link.body?.error === 'rate_limited');
+    skip(
+      'magic-link issuance checks',
+      `per-IP hourly cap reached — retry after ${link.body?.retryAfter ?? 'the hour rolls over'}`,
+    );
+  } else {
+    check('POST /auth/request-link returns ok:true', link.body?.ok === true);
+
+    const bad = await call('/auth/request-link', { method: 'POST', body: { email: 'not-an-email' } });
+    check('invalid email still returns ok (no account enumeration)', bad.body?.ok === true);
+
+    const [tokenRow] = await sql`
+      select token_hash, expires_at, used_at from auth_tokens
+       where email = ${EMAIL} order by created_at desc limit 1`;
+    check('magic-link token stored, hashed, unused', !!tokenRow && tokenRow.used_at === null);
+    check(
+      'token is a hash, not the raw value',
+      !!tokenRow && /^[0-9a-f]{64}$/.test(tokenRow.token_hash),
+    );
+  }
+
+  // /auth/verify is exercised regardless, by planting a token the same way the
+  // endpoint does — so sign-in stays covered even when issuance is throttled.
 
   // Plant a known token so we can exercise /auth/verify without reading email.
   const rawToken = crypto.randomBytes(32).toString('base64url');
@@ -121,6 +141,23 @@ try {
             values (${hash}, ${EMAIL}, now() + interval '15 minutes')`;
 
   const verify = await call('/auth/verify', { method: 'POST', body: { token: rawToken } });
+
+  // Verify has its own per-IP hourly cap. Everything downstream needs the JWT
+  // it returns, so if that cap is hit there is nothing meaningful left to test
+  // — stop with an explanation rather than cascading confusing failures.
+  if (verify.status === 429) {
+    check('rate limiter is enforcing the per-IP verify cap', verify.body?.error === 'rate_limited');
+    console.log(
+      '\n⊘ Cannot obtain a session — the per-IP verify cap is exhausted.' +
+        `\n  Nothing is broken; retry after ${verify.body?.retryAfter ?? 'the hour rolls over'},` +
+        '\n  or run from a different network to exercise the full suite.',
+    );
+    // Thrown, not process.exit(), so the cleanup in `finally` still runs —
+    // otherwise an early exit would leak the throwaway user and its rows.
+    stoppedEarly = true;
+    throw STOP;
+  }
+
   check('POST /auth/verify returns a JWT', verify.status === 200 && !!verify.body?.token);
   const jwt = verify.body?.token;
 
@@ -348,6 +385,8 @@ try {
     select count(*)::int n from telemetry_daily
      where profile_id='salesnav_people_search' and event='job_summary'`;
   check('telemetry aggregated into daily counters', telRow.n > 0);
+} catch (err) {
+  if (err !== STOP) throw err;
 } finally {
   // ── cleanup ──────────────────────────────────────────────────────────────
   console.log('\ncleanup');
@@ -361,6 +400,7 @@ try {
 }
 
 console.log(
-  `\n${pass} passed, ${fail} failed${skipped ? `, ${skipped} pending configuration` : ''}`,
+  `\n${pass} passed, ${fail} failed${skipped ? `, ${skipped} skipped` : ''}` +
+    (stoppedEarly ? ' — suite stopped early (rate limited)' : ''),
 );
 process.exit(fail === 0 ? 0 : 1);

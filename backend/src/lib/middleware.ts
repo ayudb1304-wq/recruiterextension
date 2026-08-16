@@ -58,7 +58,17 @@ function allowedOrigin(env: Env, origin: string): string | null {
   if (env.ALLOWED_EXTENSION_ID && origin === `chrome-extension://${env.ALLOWED_EXTENSION_ID}`) {
     return origin;
   }
-  if (env.SITE_BASE && origin === env.SITE_BASE.replace(/\/$/, '')) return origin;
+  // Compare ORIGINS, not raw strings. SITE_BASE legitimately carries a path
+  // (GitHub Pages project sites live at /<repo>/), but a browser's Origin
+  // header is only scheme + host + port. Comparing the two directly meant the
+  // auth handoff page would be refused by CORS the moment SITE_BASE had a path.
+  if (env.SITE_BASE) {
+    try {
+      if (origin === new URL(env.SITE_BASE).origin) return origin;
+    } catch {
+      // Malformed SITE_BASE: fall through rather than throwing on every request.
+    }
+  }
   // Dev convenience only: unpacked extension ids change on every reload.
   if (env.ENVIRONMENT !== 'production' && origin.startsWith('chrome-extension://')) return origin;
   if (env.ENVIRONMENT !== 'production' && origin.startsWith('http://localhost')) return origin;
