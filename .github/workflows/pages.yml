@@ -1,0 +1,64 @@
+# Publishes /site to GitHub Pages (docs/02 §2.4).
+#
+# Uses the Actions deployment path rather than the "serve a branch folder"
+# setting, because Pages can only serve / or /docs from a branch — and /docs
+# holds the spec set, not the website. This way /site stays where it belongs on
+# main, with no gh-pages branch to keep in sync.
+#
+# Zero build step, zero cost: the site is plain HTML + one stylesheet.
+
+name: Deploy site to Pages
+
+on:
+  push:
+    branches: [main]
+    # Only redeploy when the site actually changes.
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it — a half-published
+# privacy policy is worse than a slightly stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Warn about unfilled trader-disclosure placeholders
+        # The privacy policy is a legal document that the CWS listing must link
+        # to, and the EU DSA trader disclosure needs a real name, address and
+        # SMS-verified phone (docs/08 §3, docs/09 §6).
+        #
+        # This warns rather than fails: the site needs to be live well before
+        # submission — SITE_BASE, the checkout redirect and the auth handoff all
+        # depend on it — and blocking that on paperwork would be backwards.
+        # It MUST be resolved before submitting to the store.
+        run: |
+          if grep -rn "\[LEGAL NAME\|\[REGISTERED ADDRESS\|\[SMS-VERIFIED\|\[PROVIDER NAME" site/; then
+            echo "::warning::site/ still has placeholders — fill these before CWS submission (docs/08 §3)."
+          else
+            echo "no placeholders remaining"
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
