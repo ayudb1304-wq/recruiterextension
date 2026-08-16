@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy — Recruiter Export</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="./">Recruiter Export</a>
+      <nav>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+      </nav>
+    </header>
+
+    <h1>Privacy Policy</h1>
+    <p class="lede">Last updated: 16 August 2026</p>
+
+    <!--
+      Drafted from docs/08 §5 and §6. The retention table below must stay in sync
+      with the CWS data-usage form answers — a reviewer will compare them.
+      TODO (human, Phase 7): fill in the trader details required by the EU DSA
+      (legal name, address, SMS-verified phone) before submitting to the store.
+    -->
+
+    <h2>1. Who we are</h2>
+    <p>
+      Recruiter Export is a Chrome extension operated by <strong>[LEGAL NAME — human task]</strong>,
+      <strong>[REGISTERED ADDRESS — human task]</strong>. Contact:
+      <a href="mailto:hello@example.com">hello@example.com</a>, phone
+      <strong>[SMS-VERIFIED PHONE — human task]</strong>.
+    </p>
+
+    <h2>2. What the extension reads, and why</h2>
+    <p>
+      When you press Export on a LinkedIn Sales Navigator or Recruiter search, the extension reads
+      the search results already displayed in your browser and assembles them into a spreadsheet.
+      It runs only on <code>linkedin.com</code>, only when you start an export, and it is read-only:
+      it does not send messages, connection requests, or change anything in your LinkedIn account.
+    </p>
+    <p>
+      <strong>We do not receive or store the candidate data you export.</strong> It goes from your
+      browser into your file or your Google Sheet.
+    </p>
+
+    <h2>3. Account data we hold</h2>
+    <p>
+      Your email address, your plan, and counts of how many rows you have exported. That is the
+      whole list. We do not store your name, your company, your searches, or the candidates you
+      found.
+    </p>
+
+    <h2>4. Email lookups (Pro)</h2>
+    <p>
+      If you turn on "Find &amp; verify emails", the extension sends a candidate's first name, last
+      name and company name to our server, which forwards them to our enrichment provider and
+      returns an email address. We do not log the request or the response, and we do not keep
+      either. The enrichment provider is an independent controller with its own policy:
+      <strong>[PROVIDER NAME + POLICY LINK — human task, Phase 6]</strong>.
+    </p>
+
+    <h2>5. Payments</h2>
+    <p>
+      Payments are handled by DodoPayments as Merchant of Record. Card details never reach us. We
+      receive a customer id, a subscription id, and a status.
+    </p>
+
+    <h2>6. Health statistics</h2>
+    <p>
+      The extension sends anonymous counters after an export: how many rows, how many pages, what
+      fraction of fields it managed to read, and which version of our selector configuration was
+      used. These contain no candidate data, no names, no emails, no URLs and no search terms.
+      They exist so we notice LinkedIn changing their page layout before you do. You can turn them
+      off in the extension's settings.
+    </p>
+
+    <h2>7. Google Sheets</h2>
+    <p>
+      If you push to Google Sheets, the extension asks Google for permission to write to your
+      spreadsheets. That token stays in your browser and is never sent to our servers. We ask for
+      the spreadsheets scope only.
+    </p>
+
+    <h2>8. What is stored, and for how long</h2>
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Where it lives</th><th>Retention</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Candidate data you export</td>
+          <td>Your browser → your file or sheet</td>
+          <td>Never stored by us</td>
+        </tr>
+        <tr>
+          <td>Duplicate-detection hashes</td>
+          <td>Your browser only</td>
+          <td>Until you clear them in settings</td>
+        </tr>
+        <tr>
+          <td>Your email address</td>
+          <td>Our database (Supabase)</td>
+          <td>Until you delete your account</td>
+        </tr>
+        <tr>
+          <td>Subscription status</td>
+          <td>Our database + DodoPayments</td>
+          <td>Per Dodo's policy; we hold no card data</td>
+        </tr>
+        <tr>
+          <td>Usage counts</td>
+          <td>Our database</td>
+          <td>13 months</td>
+        </tr>
+        <tr>
+          <td>Health statistics</td>
+          <td>Our database, as daily totals only</td>
+          <td>13 months</td>
+        </tr>
+        <tr>
+          <td>Google Sheets token</td>
+          <td>Your browser only</td>
+          <td>Never sent to us</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>9. Your rights</h2>
+    <p>
+      Email us to see, correct, export or delete what we hold. Deleting your account removes your
+      user row and your subscription row. Because we never hold candidate data, there is nothing on
+      our side for a candidate to request — that data only ever existed in your browser and your
+      own files.
+    </p>
+
+    <h2>10. We do not sell data</h2>
+    <p>
+      We do not sell or transfer your data to third parties for purposes unrelated to the
+      extension's single purpose, do not use it for advertising, and do not use it to determine
+      creditworthiness or for lending.
+    </p>
+
+    <h2>11. Changes</h2>
+    <p>
+      If this policy changes materially we will say so in the extension before your next export.
+    </p>
+
+    <footer>
+      <p>Not affiliated with, endorsed by, or sponsored by LinkedIn Corporation.</p>
+    </footer>
+  </body>
+</html>

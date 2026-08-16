@@ -1,0 +1,221 @@
+{
+  "_readme": "UNVERIFIED SEED SNAPSHOT — see ./README.md. Selectors below are the spec's own examples (docs/03 §3) plus conservative structural anchors. They MUST be validated against real captured fixtures (docs/03 §7) before launch. Keys starting with _ are stripped by the zod schema.",
+  "configVersion": "0.0.0-seed",
+  "profiles": {
+    "salesnav_people_search": {
+      "profileId": "salesnav_people_search",
+      "urlPatterns": ["^https://www\\.linkedin\\.com/sales/search/people"],
+      "minProbes": 2,
+      "probes": [
+        { "id": "resultsList", "selector": "#search-results-container, [data-view-name='search-results-container']" },
+        { "id": "resultCard", "selector": "li.artdeco-list__item, [data-x-search-result]" },
+        { "id": "paginationBar", "selector": "[data-test-pagination], .artdeco-pagination" }
+      ],
+      "resultsContainer": [
+        "#search-results-container",
+        "[data-view-name='search-results-container']",
+        "ol.artdeco-list",
+        "main"
+      ],
+      "cardSelectors": [
+        "[data-x-search-result]",
+        "li.artdeco-list__item",
+        "ol.artdeco-list > li"
+      ],
+      "pagination": {
+        "nextButton": [
+          "button[aria-label='Next']",
+          "button[aria-label='Next page']",
+          ".artdeco-pagination__button--next"
+        ],
+        "scrollContainer": ["#search-results-container", "ol.artdeco-list"],
+        "pageIndicator": [".artdeco-pagination__page-state", "[data-test-pagination-page-state]"]
+      },
+      "platformWarning": [
+        "form[action*='checkpoint']",
+        "#captcha-internal",
+        "[data-test-challenge]",
+        "iframe[src*='captcha']",
+        "iframe[title*='reCAPTCHA']"
+      ],
+      "fields": [
+        {
+          "field": "fullName",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='person-name']" },
+            { "tier": 1, "type": "relative", "from": "cardRoot", "path": "a[href*='/sales/lead/'] span[dir='ltr']" },
+            { "tier": 3, "type": "css", "selector": ".artdeco-entity-lockup__title a" }
+          ],
+          "postprocess": ["stripZeroWidth", "cleanName", "collapseWhitespace", "nullIfEmpty"]
+        },
+        {
+          "field": "profileUrl",
+          "strategies": [
+            { "tier": 1, "type": "attr", "selector": "a[href*='/sales/lead/']", "attribute": "href" },
+            { "tier": 1, "type": "attr", "selector": "a[href*='/in/']", "attribute": "href" },
+            { "tier": 3, "type": "attr", "selector": ".artdeco-entity-lockup__title a", "attribute": "href" }
+          ],
+          "postprocess": ["canonicalizeUrl"]
+        },
+        {
+          "field": "headline",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='headline']" },
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='title']" },
+            { "tier": 3, "type": "css", "selector": ".artdeco-entity-lockup__subtitle" }
+          ],
+          "postprocess": ["stripZeroWidth", "collapseWhitespace", "nullIfEmpty"]
+        },
+        {
+          "field": "currentTitle",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='job-title']" },
+            { "tier": 2, "type": "textRegex", "pattern": "Current:\\s*([^·|\\n]+?)\\s+(?:at|@)\\s", "group": 1 },
+            { "tier": 3, "type": "css", "selector": ".artdeco-entity-lockup__subtitle" }
+          ],
+          "postprocess": ["stripLeadingLabel", "collapseWhitespace", "nullIfEmpty"],
+          "expected": false
+        },
+        {
+          "field": "currentCompany",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='company-name']" },
+            { "tier": 1, "type": "relative", "from": "cardRoot", "path": "a[href*='/sales/company/']" },
+            { "tier": 2, "type": "textRegex", "pattern": "Current:\\s*.*?\\s+(?:at|@)\\s+([^·|\\n]+)", "group": 1 },
+            { "tier": 3, "type": "css", "selector": ".artdeco-entity-lockup__subtitle a" }
+          ],
+          "postprocess": ["cleanCompany", "nullIfEmpty"]
+        },
+        {
+          "field": "location",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='location']" },
+            { "tier": 3, "type": "css", "selector": ".artdeco-entity-lockup__caption" }
+          ],
+          "postprocess": ["stripLeadingLabel", "collapseWhitespace", "nullIfEmpty"]
+        },
+        {
+          "field": "tenureAtCompany",
+          "strategies": [
+            { "tier": 2, "type": "textRegex", "pattern": "(\\d+\\s*(?:yrs?|years?)(?:\\s*\\d+\\s*(?:mos?|months?))?)\\s*(?:in\\s+(?:role|company))?", "group": 1 },
+            { "tier": 2, "type": "textRegex", "pattern": "(\\d+\\s*(?:mos?|months?))\\s*(?:in\\s+(?:role|company))", "group": 1 },
+            { "tier": 2, "type": "textRegex", "pattern": "(less than a year)", "group": 1 }
+          ],
+          "postprocess": ["normalizeTenure"],
+          "expected": false
+        },
+        {
+          "field": "mutualConnections",
+          "strategies": [
+            { "tier": 2, "type": "textRegex", "pattern": "([\\d,]+)\\s+(?:shared|mutual)\\s+connection", "group": 1 },
+            { "tier": 2, "type": "textRegex", "pattern": "(\\d+)\\s+shared", "group": 1 }
+          ],
+          "postprocess": ["digitsOnly"],
+          "expected": false
+        },
+        {
+          "field": "openToWork",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='open-to-work']", "extract": "exists" },
+            { "tier": 2, "type": "textRegex", "pattern": "(open to work)", "group": 1 },
+            { "tier": 3, "type": "css", "selector": ".artdeco-entity-lockup__badge", "extract": "exists" }
+          ],
+          "postprocess": [],
+          "expected": false
+        }
+      ]
+    },
+
+    "recruiter_search": {
+      "profileId": "recruiter_search",
+      "urlPatterns": ["^https://www\\.linkedin\\.com/talent/(?:search|hire)"],
+      "minProbes": 2,
+      "probes": [
+        { "id": "resultsList", "selector": "[data-test-results-list], .results-list" },
+        { "id": "resultCard", "selector": "[data-test-paginated-list-item], li.result-item" },
+        { "id": "paginationBar", "selector": "[data-test-pagination], .pagination" }
+      ],
+      "resultsContainer": ["[data-test-results-list]", ".results-list", "main"],
+      "cardSelectors": ["[data-test-paginated-list-item]", "li.result-item", "ol > li"],
+      "pagination": {
+        "nextButton": ["button[aria-label='Next']", "[data-test-pagination-next]"],
+        "scrollContainer": ["[data-test-results-list]", ".results-list"],
+        "pageIndicator": ["[data-test-pagination-page-state]"]
+      },
+      "platformWarning": [
+        "form[action*='checkpoint']",
+        "#captcha-internal",
+        "[data-test-challenge]",
+        "iframe[src*='captcha']"
+      ],
+      "fields": [
+        {
+          "field": "fullName",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='person-name']" },
+            { "tier": 1, "type": "css", "selector": "[data-test-row-lockup-full-name]" }
+          ],
+          "postprocess": ["stripZeroWidth", "cleanName", "collapseWhitespace", "nullIfEmpty"]
+        },
+        {
+          "field": "profileUrl",
+          "strategies": [
+            { "tier": 1, "type": "attr", "selector": "a[href*='/talent/profile/']", "attribute": "href" },
+            { "tier": 1, "type": "attr", "selector": "a[href*='/in/']", "attribute": "href" }
+          ],
+          "postprocess": ["canonicalizeUrl"]
+        },
+        {
+          "field": "headline",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='headline']" },
+            { "tier": 1, "type": "css", "selector": "[data-test-row-lockup-headline]" }
+          ],
+          "postprocess": ["stripZeroWidth", "collapseWhitespace", "nullIfEmpty"]
+        },
+        {
+          "field": "currentTitle",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='job-title']" },
+            { "tier": 2, "type": "textRegex", "pattern": "Current:\\s*([^·|\\n]+?)\\s+(?:at|@)\\s", "group": 1 }
+          ],
+          "postprocess": ["stripLeadingLabel", "collapseWhitespace", "nullIfEmpty"],
+          "expected": false
+        },
+        {
+          "field": "currentCompany",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='company-name']" },
+            { "tier": 2, "type": "textRegex", "pattern": "Current:\\s*.*?\\s+(?:at|@)\\s+([^·|\\n]+)", "group": 1 }
+          ],
+          "postprocess": ["cleanCompany", "nullIfEmpty"]
+        },
+        {
+          "field": "location",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='location']" },
+            { "tier": 1, "type": "css", "selector": "[data-test-row-lockup-location]" }
+          ],
+          "postprocess": ["stripLeadingLabel", "collapseWhitespace", "nullIfEmpty"]
+        },
+        {
+          "field": "totalExperienceHint",
+          "strategies": [
+            { "tier": 2, "type": "textRegex", "pattern": "([\\d.]+\\s*(?:yrs?|years?))\\s+(?:of\\s+)?(?:total\\s+)?experience", "group": 1 }
+          ],
+          "postprocess": ["collapseWhitespace", "nullIfEmpty"],
+          "expected": false
+        },
+        {
+          "field": "openToWork",
+          "strategies": [
+            { "tier": 1, "type": "css", "selector": "[data-anonymize='open-to-work']", "extract": "exists" },
+            { "tier": 2, "type": "textRegex", "pattern": "(open to work)", "group": 1 }
+          ],
+          "postprocess": [],
+          "expected": false
+        }
+      ]
+    }
+  }
+}

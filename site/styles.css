@@ -1,0 +1,131 @@
+/* GitHub Pages, zero build step, zero cost (docs/02 §2.4). */
+
+:root {
+  --bg: #ffffff;
+  --text: #14181f;
+  --muted: #55606f;
+  --accent: #0a5c36;
+  --border: #d8dce2;
+  --sunken: #f4f5f7;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0 auto;
+  padding: 0 20px 64px;
+  max-width: 760px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+header a {
+  color: var(--muted);
+  margin-left: 16px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+h1 {
+  font-size: 34px;
+  line-height: 1.2;
+  margin: 40px 0 12px;
+}
+
+h2 {
+  font-size: 22px;
+  margin: 36px 0 8px;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 24px 0 4px;
+}
+
+.lede {
+  font-size: 20px;
+  color: var(--muted);
+}
+
+a {
+  color: var(--accent);
+}
+
+.cta {
+  display: inline-block;
+  margin: 20px 0;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  background: var(--sunken);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 15px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+}
+
+footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+code {
+  background: var(--sunken);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+:focus-visible {
+  outline: 2px solid #1b53c0;
+  outline-offset: 2px;
+}

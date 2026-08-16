@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "recruitexport-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+
+  // Non-secret vars. Secrets go in via `wrangler secret put` (docs/08 §7):
+  //   SUPABASE_SERVICE_KEY, JWT_SECRET, ENRICH_API_KEY, DODO_WEBHOOK_SECRET,
+  //   EMAIL_API_KEY
+  "vars": {
+    "ENVIRONMENT": "development",
+    "ENRICH_PROVIDER": "mock",
+    "SITE_BASE": "http://localhost:4173",
+    "EMAIL_FROM": "login@example.com"
+  },
+
+  // KV for rate-limit counters, magic-link tokens, job reservations and
+  // webhook idempotency (docs/05 §4, §6, §8).
+  // Human task, Phase 5: `wrangler kv namespace create RE_KV` and paste the id.
+  "kv_namespaces": [
+    {
+      "binding": "RE_KV",
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID",
+      "preview_id": "REPLACE_WITH_KV_PREVIEW_ID"
+    }
+  ]
+}

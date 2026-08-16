@@ -1,0 +1,17 @@
+# Copy to `.dev.vars` (gitignored) for `wrangler dev`.
+# In production these are set with `wrangler secret put <NAME>` — never committed.
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=
+JWT_SECRET=dev-only-change-me-at-least-32-chars-long
+ENRICH_PROVIDER=mock
+ENRICH_API_KEY=
+DODO_WEBHOOK_SECRET=
+DODO_CHECKOUT_URL_PRO_MONTHLY=https://checkout.dodopayments.com/replace-me-monthly
+DODO_CHECKOUT_URL_PRO_ANNUAL=https://checkout.dodopayments.com/replace-me-annual
+DODO_PORTAL_URL=https://portal.dodopayments.com/replace-me
+DODO_PRODUCT_ID_PRO_MONTHLY=
+DODO_PRODUCT_ID_PRO_ANNUAL=
+EMAIL_API_KEY=
+EMAIL_FROM=login@example.com
+SITE_BASE=http://localhost:4173
+ALLOWED_EXTENSION_ID=

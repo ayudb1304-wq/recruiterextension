@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Signing you in — Recruiter Export</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="./">Recruiter Export</a>
+    </header>
+
+    <h1>Signing you in…</h1>
+    <p id="status" class="lede" role="status" aria-live="polite">One moment.</p>
+
+    <div id="fallback" class="card" hidden>
+      <p>
+        We could not hand the sign-in to the extension automatically. Copy this code, open the
+        extension's side panel, and paste it there:
+      </p>
+      <p><code id="code"></code></p>
+    </div>
+
+    <footer>
+      <p><a href="./">Back to the site</a></p>
+    </footer>
+
+    <script>
+      /*
+       * Magic-link handoff (docs/05 §1).
+       *
+       * The one-time token arrives in the URL FRAGMENT, which browsers never send
+       * to a server — so it stays out of GitHub Pages logs and any referrer. This
+       * page posts it to our API, gets a JWT back, and hands that to the
+       * extension over `chrome.runtime.sendMessage`. Only origins listed in the
+       * extension's `externally_connectable` can do that.
+       *
+       * TODO (human, Phase 7): set API_BASE and EXTENSION_ID to the production
+       * values once the Worker is deployed and the CWS item id exists.
+       */
+      const API_BASE = 'http://localhost:8787';
+      const EXTENSION_ID = '';
+
+      const statusEl = document.getElementById('status');
+      const fallbackEl = document.getElementById('fallback');
+      const codeEl = document.getElementById('code');
+
+      function fail(message, token) {
+        statusEl.textContent = message;
+        if (token) {
+          codeEl.textContent = token;
+          fallbackEl.hidden = false;
+        }
+      }
+
+      async function run() {
+        const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+        const token = params.get('token');
+
+        // Clear the fragment immediately so the token is not left in history.
+        history.replaceState(null, '', location.pathname + location.search);
+
+        if (!token) {
+          fail('That sign-in link is missing its token. Request a new one from the extension.');
+          return;
+        }
+
+        let session;
+        try {
+          const res = await fetch(API_BASE + '/auth/verify', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ token }),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            fail(body.message || 'That link has expired or was already used. Request a new one.');
+            return;
+          }
+          session = await res.json();
+        } catch {
+          fail('Could not reach the server. Check your connection and try the link again.');
+          return;
+        }
+
+        if (!EXTENSION_ID || typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
+          fail('Signed in. Paste this code into the extension to finish:', session.token);
+          return;
+        }
+
+        chrome.runtime.sendMessage(
+          EXTENSION_ID,
+          {
+            type: 'auth_token',
+            token: session.token,
+            email: session.email,
+            expiresAt: session.expiresAt,
+          },
+          (response) => {
+            if (chrome.runtime.lastError || !response?.ok) {
+              fail('Signed in. Paste this code into the extension to finish:', session.token);
+              return;
+            }
+            statusEl.textContent =
+              'Signed in as ' + session.email + '. You can close this tab and go back to LinkedIn.';
+          },
+        );
+      }
+
+      run();
+    </script>
+  </body>
+</html>

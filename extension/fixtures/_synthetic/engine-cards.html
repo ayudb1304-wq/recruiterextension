@@ -1,0 +1,58 @@
+<!-- Invented markup. See ./README.md — this is an engine test double, not LinkedIn. -->
+<main>
+  <div id="results">
+    <ul class="result-list">
+      <li class="result-card" data-test-card>
+        <header>
+          <a class="lockup-title" href="/in/jane-doe-1?trk=search_srp"
+             ><span data-anonymize="person-name">Jane Doe 🚀</span></a
+          >
+        </header>
+        <p data-anonymize="headline">Senior Backend Engineer at Acme GmbH</p>
+        <p class="meta">Current: Senior Backend Engineer at Acme GmbH</p>
+        <span data-anonymize="location">Berlin, Germany</span>
+        <span class="tenure">3 yrs 2 mos in role</span>
+        <span class="shared">12 shared connections</span>
+        <span data-anonymize="open-to-work">Open to work</span>
+      </li>
+
+      <!-- tier-1 anchors missing: forces the tier-3 class-name fallback -->
+      <li class="result-card" data-test-card>
+        <header>
+          <a class="lockup-title" href="/in/carlos-ruiz-2">Carlos Ruiz, MBA</a>
+        </header>
+        <p class="lockup-subtitle">Director of Engineering at Globex Inc</p>
+        <p class="meta">Current: Director of Engineering at Globex Inc</p>
+        <span class="lockup-caption">Madrid, Spain</span>
+        <span class="tenure">less than a year</span>
+      </li>
+
+      <!-- sparse card: most fields genuinely absent -->
+      <li class="result-card" data-test-card>
+        <header>
+          <a class="lockup-title" href="/in/wei-chen-3"
+             ><span data-anonymize="person-name">Wei Chen</span></a
+          >
+        </header>
+      </li>
+
+      <!-- unconvertible lead-style URL, non-breaking spaces, decorated name -->
+      <li class="result-card" data-test-card>
+        <header>
+          <a class="lockup-title" href="/sales/lead/ACwAAA987,NAME_SEARCH,zzzz?trk=x"
+             ><span data-anonymize="person-name">Dr. Amara Okafor (She/Her)</span></a
+          >
+        </header>
+        <p data-anonymize="headline">VP&nbsp;Engineering at Initech&nbsp;LLC</p>
+        <p class="meta">Current: VP Engineering at Initech LLC</p>
+        <span data-anonymize="location">Lagos, Nigeria</span>
+        <span class="tenure">1 yr 1 mo in role</span>
+        <span class="shared">1,234 shared connections</span>
+      </li>
+    </ul>
+  </div>
+  <nav class="pager">
+    <button aria-label="Next">Next</button>
+    <span class="page-state">Page 1 of 4</span>
+  </nav>
+</main>

@@ -1,0 +1,27 @@
+{
+  "name": "recruitexport",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Export LinkedIn Sales Navigator / Recruiter search results to clean, ATS-ready CSVs.",
+  "type": "module",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "verify": "pnpm run typecheck && pnpm run test",
+    "typecheck": "pnpm -r --workspace-concurrency=1 run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev:extension": "pnpm --filter extension dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "build:extension": "pnpm --filter extension build",
+    "zip": "pnpm --filter extension zip"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "jsdom": "^30.0.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

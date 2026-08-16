@@ -1,0 +1,17 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": false,
+    "types": ["chrome"]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.svelte",
+    ".wxt/**/*",
+    "../shared/src/**/*"
+  ],
+  "exclude": ["node_modules", ".output"]
+}
