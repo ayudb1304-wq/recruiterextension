@@ -36,10 +36,12 @@
        * extension over `chrome.runtime.sendMessage`. Only origins listed in the
        * extension's `externally_connectable` can do that.
        *
-       * TODO (human, Phase 7): set API_BASE and EXTENSION_ID to the production
-       * values once the Worker is deployed and the CWS item id exists.
+       * API_BASE points at the deployed Worker.
+       * TODO (human, Phase 7): set EXTENSION_ID once the CWS item id exists.
+       * Until then this page falls back to showing a copy-paste code, which
+       * still completes sign-in.
        */
-      const API_BASE = 'http://localhost:8787';
+      const API_BASE = 'https://recruitexport-api.ayucorp.workers.dev';
       const EXTENSION_ID = '';
 
       const statusEl = document.getElementById('status');

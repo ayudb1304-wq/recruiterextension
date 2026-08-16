@@ -26,6 +26,8 @@
  * environment (CLAUDE.md guardrail 4).
  */
 
+import fs from 'node:fs';
+
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
 const LIVE = args.includes('--live');
@@ -257,12 +259,33 @@ async function main() {
     return;
   }
 
+  // ── write, do not print ──────────────────────────────────────────────────
+  // The signing secret must never reach stdout: terminal scrollback, CI logs
+  // and shared transcripts all outlive the command. It is written straight into
+  // the gitignored .dev.vars instead, and only its length is reported.
+  const { DODO_WEBHOOK_SECRET: secret, ...publicVars } = env;
+
   console.log('\n─────────────────────────────────────────────────────────────');
-  console.log('Add to backend/.dev.vars for local dev:\n');
-  for (const [key, value] of Object.entries(env)) console.log(`${key}=${value}`);
-  console.log('\nFor production, set the SECRET with wrangler (never commit it):\n');
-  console.log('  npx wrangler secret put DODO_WEBHOOK_SECRET');
-  console.log('\nThe non-secret product ids can go in wrangler.jsonc "vars".');
+  console.log('Non-secret values (safe to commit in wrangler.jsonc "vars"):\n');
+  for (const [key, value] of Object.entries(publicVars)) console.log(`${key}=${value}`);
+
+  if (secret) {
+    const path = 'backend/.dev.vars';
+    let contents = fs.existsSync(path) ? fs.readFileSync(path, 'utf8') : '';
+    contents = /^DODO_WEBHOOK_SECRET=.*$/m.test(contents)
+      ? contents.replace(/^DODO_WEBHOOK_SECRET=.*$/m, `DODO_WEBHOOK_SECRET=${secret}`)
+      : `${contents}\nDODO_WEBHOOK_SECRET=${secret}\n`;
+    fs.writeFileSync(path, contents);
+
+    console.log(`\n✔ signing key written to ${path} (${secret.length} chars, not printed)`);
+    console.log('\nPush it to the deployed Worker — this reads the value from the file,');
+    console.log('so the secret never appears in your shell history either:\n');
+    console.log(
+      '  node -e "const fs=require(\'fs\');const m=/^DODO_WEBHOOK_SECRET=(.*)$/m.exec(' +
+        'fs.readFileSync(\'backend/.dev.vars\',\'utf8\'));process.stdout.write(m[1])" \\',
+    );
+    console.log('    | npx wrangler secret put DODO_WEBHOOK_SECRET --cwd backend');
+  }
   console.log('─────────────────────────────────────────────────────────────');
   console.log('\n👤 Still manual in the Dodo dashboard:');
   console.log('  - checkout links per product  → DODO_CHECKOUT_URL_PRO_{MONTHLY,ANNUAL}');

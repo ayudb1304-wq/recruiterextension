@@ -41,6 +41,7 @@ const EMAIL = `smoke-${Date.now()}@example.invalid`;
 
 let pass = 0;
 let fail = 0;
+let skipped = 0;
 
 function check(label, ok, detail = '') {
   if (ok) {
@@ -50,6 +51,12 @@ function check(label, ok, detail = '') {
     fail += 1;
     console.log(`  ✖ ${label}${detail ? ` — ${detail}` : ''}`);
   }
+}
+
+/** Not-yet-configured, as opposed to broken. Reported, but not a failure. */
+function skip(label, why) {
+  skipped += 1;
+  console.log(`  ⊘ ${label}\n      ${why}`);
 }
 
 async function call(path, { method = 'GET', body, token, headers = {} } = {}) {
@@ -143,7 +150,19 @@ try {
     body: { estimatedRows: 10, enrich: true },
   });
   check('free user asking for enrichment gets plan_required', enrichAsFree.body?.error === 'plan_required');
-  check('...with a checkout URL to upgrade', typeof enrichAsFree.body?.checkoutUrl === 'string');
+
+  // Deliberately strict: an empty string is NOT a usable upgrade link, and an
+  // earlier version of this assertion passed locally purely because an unset
+  // `DODO_CHECKOUT_URL_PRO_MONTHLY=` in .dev.vars reads back as "".
+  const checkoutUrl = enrichAsFree.body?.checkoutUrl;
+  if (!checkoutUrl) {
+    skip(
+      'plan_required carries no checkout URL',
+      'set DODO_CHECKOUT_URL_PRO_MONTHLY — until then the upgrade prompt links nowhere',
+    );
+  } else {
+    check('...with a usable https checkout URL', /^https:\/\/.+/.test(checkoutUrl), checkoutUrl);
+  }
 
   const freeReserve = await call('/quota/reserve', {
     method: 'POST',
@@ -340,5 +359,7 @@ try {
   await sql.end();
 }
 
-console.log(`\n${pass} passed, ${fail} failed`);
+console.log(
+  `\n${pass} passed, ${fail} failed${skipped ? `, ${skipped} pending configuration` : ''}`,
+);
 process.exit(fail === 0 ? 0 : 1);
